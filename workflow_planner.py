@@ -85,6 +85,36 @@ and always respond in a neutral, concise, and analytical tone optimized for docu
             allow_delegation=False
         )
 
+    def infer_fallback_questions(self, intent_json):
+        """Generate smart fallback clarifying questions when model returns none."""
+        fallback_questions = []
+
+        # Check for missing trigger event
+        if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower() or "unclear" in str(intent_json.get("trigger_event", "")).lower():
+            fallback_questions.append("What should trigger or start this process? (e.g., when a file is uploaded, daily schedule, manual click)")
+
+        # Check for empty or vague fields
+        if not intent_json.get("current_state") or "manual" not in str(intent_json["current_state"]).lower():
+            fallback_questions.append("How is this process currently handled? (manual, semi-automated, or no system yet?)")
+
+        if not intent_json["entities"].get("destination") or "unspecified" in str(intent_json["entities"]["destination"]).lower():
+            fallback_questions.append("Where should the final output or results be stored or sent?")
+
+        if not intent_json["entities"].get("tools") or "unspecified" in str(intent_json["entities"]["tools"]).lower():
+            fallback_questions.append("Do you currently use any software, scripts, or systems for this process?")
+
+        if not intent_json.get("pain_points") or len(intent_json["pain_points"]) == 0:
+            fallback_questions.append("What's the biggest challenge or bottleneck in your current process?")
+
+        if not intent_json.get("constraints") or len(intent_json["constraints"]) == 0:
+            fallback_questions.append("Are there any rules, limits, or compliance requirements this process must follow?")
+
+        if not intent_json.get("outputs") or len(intent_json["outputs"]) == 0:
+            fallback_questions.append("What kind of output or result do you expect from this process?")
+
+        # Always limit to 5 questions max
+        return fallback_questions[:5]
+
     def generate_clarifying_questions(self, intent_json: dict) -> list[str]:
         """Generate smart clarifying questions from unknowns in the intent."""
         unknowns = intent_json.get("unknowns", [])
@@ -154,6 +184,7 @@ Return only a structured JSON with these exact fields:
 {{
   "goal": "Brief, clear statement of what the user wants to achieve",
   "problem_type": "workflow | data task | single action | unclear",
+  "trigger_event": "What initiates this process (e.g., user action, file upload, schedule, system trigger)",
   "inputs": ["List of input sources or data types"],
   "outputs": ["List of desired outputs or destinations"],
   "entities": {{
@@ -169,13 +200,16 @@ Return only a structured JSON with these exact fields:
   "not_negotiable": ["List of absolute requirements that cannot be compromised"],
   "clarity_level": "high | medium | low",
   "unknowns": ["List of missing information needed for clarity"],
-  "summary": "One-sentence summary of the core intent",
-  "metadata": {
-    "version": "1.0",
-    "agent_type": "ProblemUnderstandingAgent",
-    "last_updated": "auto-fill-timestamp"
-  }
+  "summary": "One-sentence summary of the core intent"
 }}
+
+Be sure to include 'trigger_event' even if it's inferred.
+For example:
+- "User uploads a file"
+- "Daily at 6 PM"
+- "When a form is submitted"
+- "When an email arrives"
+If no explicit event is found, infer the most likely one based on context.
 
 Do NOT suggest tools, solutions, or roadmaps.
 Keep tone neutral and analytical.
@@ -227,6 +261,7 @@ Ensure all string values are specific and contextual — avoid placeholders like
             intent_json = {
                 "goal": f"Error processing: {problem_statement}",
                 "problem_type": "unclear",
+                "trigger_event": "Unclear — likely manual user initiation",
                 "inputs": [],
                 "outputs": [],
                 "entities": {},
@@ -236,36 +271,48 @@ Ensure all string values are specific and contextual — avoid placeholders like
                 "not_negotiable": [],
                 "clarity_level": "low",
                 "unknowns": [f"Processing error: {str(e)}"],
-                "summary": f"Failed to analyze: {problem_statement}"
+                "summary": f"Failed to analyze: {problem_statement}",
+                "metadata": {
+                    "version": "1.0",
+                    "agent_type": "ProblemUnderstandingAgent",
+                    "last_updated": datetime.datetime.now().isoformat()
+                }
             }
+
+        # Add fallback inference for missing trigger events
+        if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower():
+            intent_json["trigger_event"] = "Unclear — likely manual user initiation or file upload"
 
         # Layer 1B: Dynamic Clarification Loop
         unknowns = intent_json.get("unknowns", [])
-        if unknowns and intent_json.get("clarity_level", "low") != "high":
+        questions = self.generate_clarifying_questions(intent_json)
+
+        # Step 3: If Gemini didn't generate any, use fallback logic
+        if not questions and (not unknowns or len(unknowns) == 0):
+            print("\n⚙️ No clarifying questions detected from Gemini — inferring fallback ones...")
+            questions = self.infer_fallback_questions(intent_json)
+
+        # Step 4: Proceed only if we have *any* questions now
+        if questions:
             print("\n🤔 I need a few clarifications to understand better:")
+            user_answers = {}
 
-            # Generate clarifying questions
-            questions = self.generate_clarifying_questions(intent_json)
+            # Ask questions interactively
+            for i, question in enumerate(questions, 1):
+                print(f"\n{i}. {question}")
+                answer = input("> ").strip()
+                user_answers[question] = answer
 
-            if questions:
-                user_answers = {}
+            # Update the JSON with clarifications
+            intent_json["clarifications"] = user_answers
+            intent_json["clarity_level"] = "high"  # Improved with clarifications
 
-                # Ask questions interactively
-                for i, question in enumerate(questions, 1):
-                    print(f"\n{i}. {question}")
-                    answer = input("> ").strip()
-                    user_answers[question] = answer
+            # Clear unknowns since we've addressed them
+            intent_json["unknowns"] = []
 
-                # Update the JSON with clarifications
-                intent_json["clarifications"] = user_answers
-                intent_json["clarity_level"] = "high"  # Improved with clarifications
-
-                # Clear unknowns since we've addressed them
-                intent_json["unknowns"] = []
-
-                # Refinement Step: Re-evaluate and update fields based on clarifications
-                if user_answers:
-                    refinement_prompt = f"""
+            # Refinement Step: Re-evaluate and update fields based on clarifications
+            if user_answers:
+                refinement_prompt = f"""
 You are the Problem Understanding Agent.
 
 Refine the following intent analysis using the clarifications provided.
@@ -304,18 +351,18 @@ Also ensure that inferred constraints or not_negotiable items align with real-wo
 (e.g., legal, performance, or privacy-related considerations).
 """
 
-                    try:
-                        refined_response = self.gemini_llm.call([{"role": "user", "content": refinement_prompt}])
-                        start_idx = refined_response.find('{')
-                        end_idx = refined_response.rfind('}') + 1
-                        if start_idx != -1 and end_idx != -1:
-                            refined_json = json.loads(refined_response[start_idx:end_idx])
-                            intent_json = refined_json  # overwrite with refined version
-                    except Exception as e:
-                        print(f"⚠️ Refinement failed: {e}. Keeping original JSON.")
+                try:
+                    refined_response = self.gemini_llm.call([{"role": "user", "content": refinement_prompt}])
+                    start_idx = refined_response.find('{')
+                    end_idx = refined_response.rfind('}') + 1
+                    if start_idx != -1 and end_idx != -1:
+                        refined_json = json.loads(refined_response[start_idx:end_idx])
+                        intent_json = refined_json  # overwrite with refined version
+                except Exception as e:
+                    print(f"⚠️ Refinement failed: {e}. Keeping original JSON.")
 
-            else:
-                print("No clarifying questions needed.")
+        else:
+            print("\n✅ Gemini captured all context — no further clarifications needed.")
 
         # Add metadata for versioning and traceability
         intent_json["metadata"] = {
