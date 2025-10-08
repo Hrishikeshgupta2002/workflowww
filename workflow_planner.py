@@ -159,6 +159,7 @@ Return only a structured JSON with these exact fields:
   "current_state": "How the process works now, if mentioned",
   "pain_points": ["List of challenges or frustrations mentioned"],
   "constraints": ["List of limitations or requirements mentioned"],
+  "not_negotiable": ["List of absolute requirements that cannot be compromised"],
   "clarity_level": "high | medium | low",
   "unknowns": ["List of missing information needed for clarity"],
   "summary": "One-sentence summary of the core intent"
@@ -211,6 +212,7 @@ Return ONLY the JSON object, no additional text.
                 "current_state": "Unknown",
                 "pain_points": [],
                 "constraints": [],
+                "not_negotiable": [],
                 "clarity_level": "low",
                 "unknowns": [f"Processing error: {str(e)}"],
                 "summary": f"Failed to analyze: {problem_statement}"
@@ -246,7 +248,7 @@ Return ONLY the JSON object, no additional text.
 You are the Problem Understanding Agent.
 
 Refine the following intent analysis using the clarifications provided.
-Improve or complete fields like 'current_state', 'pain_points', 'constraints', and 'summary'
+Improve or complete fields like 'current_state', 'pain_points', 'constraints', 'not_negotiable', and 'summary'
 based on the clarified understanding.
 
 If constraints are not explicitly mentioned, infer implicit ones — such as:
@@ -254,6 +256,13 @@ If constraints are not explicitly mentioned, infer implicit ones — such as:
 - Data privacy and security needs
 - System or integration limits
 - Accuracy or performance requirements
+
+For 'not_negotiable' items, identify absolute requirements that cannot be compromised — such as:
+- Mandatory legal compliance requirements
+- Critical security or privacy mandates
+- Fixed budget limitations
+- Essential regulatory standards
+- Non-negotiable business rules
 
 Do not invent unrelated details. Keep tone analytical and factual.
 
