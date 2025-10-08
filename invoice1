@@ -1,0 +1,52 @@
+{
+  "goal": "To capture images of receipts and automatically generate PDF invoices, saving them to Google Drive.",
+  "problem_type": "workflow",
+  "inputs": [
+    "Images of receipts"
+  ],
+  "outputs": [
+    "PDF Invoices"
+  ],
+  "entities": {
+    "action": "Invoice generation",
+    "sources": "Images of receipts",
+    "destination": "Google Drive",
+    "tools": "OCR software, invoice generation software",
+    "data_types": "Image data, invoice data (date, item descriptions, vendor information, total amount, etc.)"
+  },
+  "current_state": "Manual receipt processing and invoice creation (implied).",
+  "pain_points": [
+    "Manual invoice creation",
+    "Time spent on manual data entry from receipts"
+  ],
+  "constraints": [
+    "Accuracy of data extraction from receipt images",
+    "Legibility of receipt images",
+    "Storage limits in Google Drive",
+    "Data privacy and security of receipt information",
+    "Scalability to handle future image processing volume",
+    "Compliance with accounting and legal standards for invoices"
+  ],
+  "not_negotiable": [
+    "Receipt images as the data source",
+    "PDF format for invoices",
+    "Saving invoices to Google Drive",
+    "Inclusion of all relevant receipt data on the invoice (date, item descriptions, vendor information, total amount, etc.)",
+    "Legal compliance of generated invoices"
+  ],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate invoice generation from receipt images, creating PDF invoices with all relevant data and saving them to Google Drive. The user anticipates processing approximately 30 images per month.",
+  "clarifications": {
+    "What kind of items are you taking pictures of to create invoices (e.g., receipts, bills, delivery slips)?": "receipts",
+    "What file type do you want the finished invoices to be in (like PDF or a spreadsheet)?": "pdf",
+    "Where should the generated invoices be saved or sent (e.g., a folder, email, accounting software)?": "google drive",
+    "Besides the total amount, what other details do you need on the invoices (e.g., date, item descriptions, vendor information)?": "everything",
+    "About how many images will you be processing each month?": "30"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T17:59:27.971000"
+  }
+}

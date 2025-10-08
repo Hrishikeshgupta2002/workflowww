@@ -1,0 +1,76 @@
+{
+  "goal": "Automate sales funnels and acquire leads from LinkedIn.",
+  "problem_type": "workflow",
+  "trigger_event": "User initiates sales funnel process (e.g., by starting a campaign or setting up automation rules).",
+  "inputs": [
+    "LinkedIn profiles",
+    "Sales funnel stages",
+    "Lead information"
+  ],
+  "outputs": [
+    "300 qualified leads per month",
+    "Automated sales funnel progression",
+    "Lead data (potentially stored, but currently no CRM)"
+  ],
+  "volume": "300 leads/month",
+  "user_role": "Individual user",
+  "success_criteria": "Acquisition of 300 qualified leads per month from LinkedIn and automated progression of leads through the sales funnel.",
+  "entities": {
+    "action": "Automate",
+    "sources": "LinkedIn",
+    "destination": "Sales funnel",
+    "tools": "Unspecified (LinkedIn Sales Navigator, CRM, automation platform)",
+    "data_types": "Lead data, profile information, contact details"
+  },
+  "current_state": "Manual sales funnel process and lead generation from LinkedIn. No existing CRM or marketing automation tools.",
+  "pain_points": [
+    "Manual effort required for lead generation and sales funnel management.",
+    "Time-consuming process.",
+    "Potential for missed opportunities due to lack of automation.",
+    "Inefficient lead management due to manual processes."
+  ],
+  "constraints": [
+    "LinkedIn usage policies and limitations (e.g., connection request limits).",
+    "Budget for automation tools (implied).",
+    "Technical expertise to set up and manage automation (implied).",
+    "Time constraint: Process needs to happen daily.",
+    "Data privacy and compliance (e.g., GDPR, CCPA) when handling lead data."
+  ],
+  "not_negotiable": [
+    "Must acquire leads from LinkedIn.",
+    "Must automate the sales funnel.",
+    "Target of 300 qualified leads per month.",
+    "Compliance with LinkedIn's terms of service and data privacy regulations."
+  ],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate their sales funnels and generate 300 qualified leads per month from LinkedIn daily. The current process is entirely manual, and they are not using any CRM or marketing automation tools.",
+  "clarifications": {
+    "Who usually performs or initiates this process?": "i will do it",
+    "How often or how many times per month does this process happen?": "everyday",
+    "Can you describe the steps a lead currently takes from initial contact on LinkedIn to becoming a customer?": "it is all manual right now",
+    "Which sales tasks are taking up the most of your time right now?": "this one",
+    "Besides LinkedIn, what other software or platforms are you using for sales and marketing?": "nothing",
+    "Roughly, how many qualified leads are you hoping to get from LinkedIn each month?": "300"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T18:26:50.879962",
+    "essential_fields_verified": [
+      "trigger_event",
+      "inputs",
+      "outputs",
+      "constraints",
+      "pain_points",
+      "not_negotiable",
+      "current_state",
+      "volume",
+      "user_role"
+    ],
+    "missing_fields_prompted": [],
+    "clarity_confidence": "medium",
+    "layer_ready_for": "workflow_planner",
+    "needs_refinement": true
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "goal": "To automatically generate invoices from images of receipts.",
+  "problem_type": "workflow",
+  "trigger_event": "User takes/uploads a picture of a receipt",
+  "inputs": [
+    "Images of restaurant receipts"
+  ],
+  "outputs": [
+    "Generated PDF invoices saved to Google Drive"
+  ],
+  "entities": {
+    "action": "Invoice generation",
+    "sources": "Restaurant receipt images",
+    "destination": "Google Drive",
+    "tools": "OCR software, PDF generator",
+    "data_types": "Image data, invoice data (total amount)"
+  },
+  "current_state": "Likely a manual process of data entry from restaurant receipts to create invoices.",
+  "pain_points": [
+    "Manual data entry is time-consuming and error-prone."
+  ],
+  "constraints": [
+    "Image quality may affect accuracy.",
+    "Data extraction accuracy is critical.",
+    "Google Drive storage limits may apply.",
+    "Accuracy of total amount extraction is crucial.",
+    "Legal requirements for invoice content (e.g., business name, date) must be met, even if not explicitly extracted from the receipt."
+  ],
+  "not_negotiable": [
+    "Automatic invoice generation",
+    "Invoices must be saved as PDFs.",
+    "Invoices must be saved to Google Drive.",
+    "Must be able to extract total amount from receipt images."
+  ],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate invoice creation by extracting the total amount from restaurant receipt images and saving the generated invoices as PDFs to Google Drive.",
+  "clarifications": {
+    "Should the invoices be saved as PDFs, spreadsheets, or something else?": "pdf",
+    "Where do you want the generated invoices to be saved or sent?": "google drive",
+    "Besides the total amount, what other specific information do you need from each receipt?": "only these",
+    "What kind of receipts will you be processing (e.g., restaurants, gas stations, grocery stores)?": "resturants",
+    "Will these invoices need to work with any accounting software like QuickBooks or Xero?": "no"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T18:09:26.536058"
+  }
+}

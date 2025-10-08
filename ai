@@ -1,0 +1,70 @@
+{
+  "goal": "Automate lead generation by scraping data from Google Maps and sending cold emails to business owners.",
+  "problem_type": "workflow",
+  "trigger_event": "Daily data scraping and email sending",
+  "inputs": [
+    "Google Maps data (business name, website, industry)"
+  ],
+  "outputs": [
+    "Cold emails sent to business owners"
+  ],
+  "volume": "Unspecified",
+  "user_role": "Unspecified",
+  "success_criteria": "Email data scraped successfully.",
+  "entities": {
+    "action": "Lead generation and cold email outreach",
+    "sources": "Google Maps",
+    "destination": "Business owners (via email)",
+    "tools": "Unspecified (likely scraping and email sending tools)",
+    "data_types": "Business information (name, website, industry), AI-generated email content"
+  },
+  "current_state": "Unspecified - Assuming a manual process currently exists or is desired to be replaced.",
+  "pain_points": [
+    "Manual data extraction from Google Maps is time-consuming.",
+    "Manually sending cold emails is inefficient."
+  ],
+  "constraints": [
+    "Google Maps usage policies and terms of service.",
+    "Email sending limits and spam regulations.",
+    "Data privacy regulations (e.g., GDPR, CCPA) regarding email marketing.",
+    "Accuracy of scraped data (website, name, industry).",
+    "Scalability of the scraping and email sending process for daily execution.",
+    "AI email generation quality and relevance to different business types."
+  ],
+  "not_negotiable": [
+    "Compliance with Google Maps terms of service.",
+    "Compliance with email marketing regulations (e.g., CAN-SPAM, GDPR).",
+    "Data privacy and security mandates.",
+    "Ethical AI email generation practices (avoiding misleading or harmful content)."
+  ],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate the process of scraping business data (name, website, industry) daily from Google Maps and sending AI-generated cold emails to business owners for lead generation. Success is measured by the successful scraping of email data.",
+  "clarifications": {
+    "What information about each business (e.g., phone number, website, services) do you want to collect from Google Maps?": "website and name and industry",
+    "How often do you want to scrape data and send emails (e.g., daily, weekly, monthly)?": "daily",
+    "What makes a lead \"successful\" for you (e.g., replies to the email, requests for a call, new clients)?": "email data scraped",
+    "Which types of businesses or industries are you targeting with these emails?": "diff kinds",
+    "Can you share an example of the email you plan to send to these businesses?": "these will be ai generated"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T18:17:44.361715",
+    "essential_fields_verified": [
+      "trigger_event",
+      "inputs",
+      "outputs",
+      "constraints",
+      "pain_points",
+      "not_negotiable",
+      "current_state",
+      "volume",
+      "user_role"
+    ],
+    "missing_fields_prompted": [],
+    "clarity_confidence": "high",
+    "layer_ready_for": "workflow_planner",
+    "needs_refinement": false
+  }
+}

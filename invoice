@@ -1,0 +1,55 @@
+{
+  "goal": "To automate invoice generation from scanned receipt images.",
+  "problem_type": "workflow",
+  "inputs": [
+    "Scanned receipt images"
+  ],
+  "outputs": [
+    "PDF invoices"
+  ],
+  "entities": {
+    "action": "Invoice generation",
+    "sources": "Scanned receipt images",
+    "destination": "Unspecified (likely Google-related service), pending user decision",
+    "tools": "Unspecified (OCR, invoice generation software)",
+    "data_types": "Images, Invoice data (date, item descriptions, vendor name, total amount, etc.)"
+  },
+  "current_state": "Manual receipt processing and invoice creation (implied).",
+  "pain_points": [
+    "Manual invoice creation",
+    "Time spent manually entering receipt data"
+  ],
+  "constraints": [
+    "Accuracy of data extraction from scanned receipts",
+    "Legibility of scanned receipts",
+    "Data privacy and security (receipt data may contain sensitive information)",
+    "Scalability (handling a large volume of receipts)",
+    "Performance (speed of invoice generation)",
+    "System integration limits (compatibility with Google services)"
+  ],
+  "not_negotiable": [
+    "Invoice generation from scanned receipts",
+    "Output invoice format must be PDF",
+    "Ability to review and edit extracted information before finalization",
+    "Compliance with relevant accounting and legal standards for invoices"
+  ],
+  "clarity_level": "high",
+  "unknowns": [
+    "Specific Google services to be used for storage/processing",
+    "Volume of receipts to be processed",
+    "Specific accuracy requirements for data extraction"
+  ],
+  "summary": "The user wants to automate invoice generation from scanned receipt images, outputting PDF invoices. The user needs to review and edit the extracted data before finalizing the invoice. The destination for the generated invoices is undecided but will likely involve Google services.",
+  "clarifications": {
+    "What kind of images will you be using to create invoices (e.g., receipts, scans, photos of documents)?": "scan pictures of reciepts",
+    "Besides the total amount, what other specific details do you need on the invoice (e.g., date, item descriptions, vendor name)?": "everything",
+    "What file format do you prefer for the finished invoices (e.g., PDF, Excel, Google Sheets)?": "pdf",
+    "Where do you want the generated invoices to be saved or sent (e.g., email, cloud storage, accounting software)?": "havent decided i am using google tho",
+    "Will you need to review and edit the extracted information before the invoice is finalized?": "yes"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T17:54:18.600467"
+  }
+}

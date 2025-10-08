@@ -89,31 +89,55 @@ and always respond in a neutral, concise, and analytical tone optimized for docu
         """Generate smart fallback clarifying questions when model returns none."""
         fallback_questions = []
 
-        # Check for missing trigger event
+        # 1. Trigger Event - ALWAYS ask if missing
         if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower() or "unclear" in str(intent_json.get("trigger_event", "")).lower():
-            fallback_questions.append("What should trigger or start this process? (e.g., when a file is uploaded, daily schedule, manual click)")
+            fallback_questions.append(("trigger_event", "What should trigger or start this process? (e.g., when a file is uploaded, daily schedule, manual click)"))
 
-        # Check for empty or vague fields
-        if not intent_json.get("current_state") or "manual" not in str(intent_json["current_state"]).lower():
-            fallback_questions.append("How is this process currently handled? (manual, semi-automated, or no system yet?)")
+        # 2. Input Sources - Critical for workflow design
+        if not intent_json.get("inputs") or len(intent_json["inputs"]) == 0:
+            fallback_questions.append(("inputs", "What does your process start with — files, messages, forms, or API data?"))
 
+        # 3. Output Destination - Essential for workflow completion
         if not intent_json["entities"].get("destination") or "unspecified" in str(intent_json["entities"]["destination"]).lower():
-            fallback_questions.append("Where should the final output or results be stored or sent?")
+            fallback_questions.append(("outputs", "Where should the final output or results be stored or sent?"))
 
-        if not intent_json["entities"].get("tools") or "unspecified" in str(intent_json["entities"]["tools"]).lower():
-            fallback_questions.append("Do you currently use any software, scripts, or systems for this process?")
-
-        if not intent_json.get("pain_points") or len(intent_json["pain_points"]) == 0:
-            fallback_questions.append("What's the biggest challenge or bottleneck in your current process?")
-
-        if not intent_json.get("constraints") or len(intent_json["constraints"]) == 0:
-            fallback_questions.append("Are there any rules, limits, or compliance requirements this process must follow?")
-
+        # 4. Success Criteria / Output Format
         if not intent_json.get("outputs") or len(intent_json["outputs"]) == 0:
-            fallback_questions.append("What kind of output or result do you expect from this process?")
+            fallback_questions.append(("outputs", "What does a successful result look like — a file, a report, or a message?"))
 
-        # Always limit to 5 questions max
-        return fallback_questions[:5]
+        # 5. Current State - How it's done today (improved logic)
+        if not intent_json.get("current_state") or any(x in str(intent_json.get("current_state", "")).lower() for x in ["unspecified", "unknown", "unclear", "not mentioned"]):
+            fallback_questions.append(("current_state", "How is this process currently handled? (manually, semi-automated, or not at all?)"))
+
+        # 6. Constraints - Design feasibility limits
+        if not intent_json.get("constraints") or len(intent_json["constraints"]) == 0:
+            fallback_questions.append(("constraints", "Are there any limitations or rules to follow — timing, tools, compliance, or cost?"))
+
+        # 7. Pain Points - Why automate this
+        if not intent_json.get("pain_points") or len(intent_json["pain_points"]) == 0:
+            fallback_questions.append(("pain_points", "What's frustrating or slow about how you do this today?"))
+
+        # 8. Not-Negotiables - Absolute requirements
+        if not intent_json.get("not_negotiable") or len(intent_json["not_negotiable"]) == 0:
+            fallback_questions.append(("not_negotiable", "Are there any parts of this process that must stay exactly the same?"))
+
+        # 9. Volume/Frequency - Scale requirements (improved deterministic logic)
+        if not intent_json.get("volume") and "volume" not in json.dumps(intent_json).lower():
+            fallback_questions.append(("volume", "How often or how many times per month does this process happen?"))
+
+        # 10. User Role/Actor - Who performs this (improved deterministic logic)
+        if not intent_json.get("user_role") and not any(word in json.dumps(intent_json).lower() for word in ["user", "role", "actor", "person", "team", "department"]):
+            fallback_questions.append(("user_role", "Who usually performs or initiates this process?"))
+
+        # Prioritize questions by importance
+        priority_order = [
+            "trigger_event", "inputs", "outputs", "current_state",
+            "pain_points", "constraints", "not_negotiable", "volume", "user_role"
+        ]
+
+        # Sort by priority and return top 6
+        fallback_questions.sort(key=lambda q: next((i for i, p in enumerate(priority_order) if p == q[0]), 99))
+        return [q[1] for q in fallback_questions[:6]]
 
     def generate_clarifying_questions(self, intent_json: dict) -> list[str]:
         """Generate smart clarifying questions from unknowns in the intent."""
@@ -187,6 +211,9 @@ Return only a structured JSON with these exact fields:
   "trigger_event": "What initiates this process (e.g., user action, file upload, schedule, system trigger)",
   "inputs": ["List of input sources or data types"],
   "outputs": ["List of desired outputs or destinations"],
+  "volume": "How often or how many times this process occurs (if mentioned)",
+  "user_role": "Who performs or initiates this process (if mentioned)",
+  "success_criteria": "What defines successful completion of this process",
   "entities": {{
     "action": "Primary action being performed",
     "sources": "Where data/process comes from",
@@ -275,22 +302,66 @@ Ensure all string values are specific and contextual — avoid placeholders like
                 "metadata": {
                     "version": "1.0",
                     "agent_type": "ProblemUnderstandingAgent",
-                    "last_updated": datetime.datetime.now().isoformat()
+                    "last_updated": datetime.datetime.now().isoformat(),
+                    "essential_fields_verified": [],
+                    "missing_fields_prompted": ["trigger_event", "inputs", "outputs", "constraints", "pain_points", "not_negotiable", "current_state", "volume", "user_role"],
+                    "clarity_confidence": "low",
+                    "layer_ready_for": "workflow_planner",
+                    "needs_refinement": True
                 }
             }
 
-        # Add fallback inference for missing trigger events
-        if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower():
-            intent_json["trigger_event"] = "Unclear — likely manual user initiation or file upload"
+        # --- 🧠 Dead-Important Field Enforcement ---
+        critical_fields = {
+            "trigger_event": "What should trigger or start this process? (e.g., file upload, scheduled time, or user action?)",
+            "inputs": "What does your process start with — files, forms, messages, or API data?",
+            "outputs": "What does a successful result look like — a file, report, or message?",
+            "current_state": "How is this process currently handled? (manually, semi-automated, or not at all?)",
+            "pain_points": "What's frustrating or slow about how you do this today?",
+            "constraints": "Are there any limitations or rules to follow — timing, tools, compliance, or cost?",
+            "not_negotiable": "Are there any parts of this process that must stay exactly the same?",
+            "user_role": "Who usually performs or initiates this process?",
+            "volume": "How often or how many times per month does this process happen?"
+        }
+
+        # Detect missing or vague critical fields
+        missing_critical_questions = []
+        for field, question in critical_fields.items():
+            value = intent_json.get(field)
+            # If field missing, empty, or unclear → ask
+            if not value or str(value).strip().lower() in ["", "unspecified", "unknown", "unclear", "not mentioned", "none"]:
+                missing_critical_questions.append(question)
+
+        # If Gemini said clarity is high but skipped criticals → downgrade and ask
+        originally_high_clarity = intent_json.get("clarity_level", "").lower() == "high"
+        if missing_critical_questions:
+            if originally_high_clarity:
+                intent_json["clarity_level"] = "medium"
+            print("\n⚙️ Some critical details are missing — let's clarify those first.")
+
+        # Auto trigger clarification - too important to leave to inference
+        if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower() or "unclear" in str(intent_json.get("trigger_event", "")).lower():
+            print("\n⚙️ I need one key clarification before continuing.")
+            print("What should trigger or start this process?")
+            print("Examples: when a file is uploaded, every morning at 9 AM, when a new email arrives, or when you click a button.")
+            user_trigger = input("> ").strip()
+            if user_trigger:
+                intent_json["trigger_event"] = user_trigger
+            else:
+                intent_json["trigger_event"] = "Unclear — likely manual user initiation or file upload"
 
         # Layer 1B: Dynamic Clarification Loop
         unknowns = intent_json.get("unknowns", [])
         questions = self.generate_clarifying_questions(intent_json)
 
-        # Step 3: If Gemini didn't generate any, use fallback logic
+        # --- Merge all question sources ---
         if not questions and (not unknowns or len(unknowns) == 0):
             print("\n⚙️ No clarifying questions detected from Gemini — inferring fallback ones...")
             questions = self.infer_fallback_questions(intent_json)
+
+        # Merge critical missing questions if any
+        if missing_critical_questions:
+            questions = list(dict.fromkeys(missing_critical_questions + questions))  # Deduplicate while preserving order
 
         # Step 4: Proceed only if we have *any* questions now
         if questions:
@@ -305,7 +376,19 @@ Ensure all string values are specific and contextual — avoid placeholders like
 
             # Update the JSON with clarifications
             intent_json["clarifications"] = user_answers
-            intent_json["clarity_level"] = "high"  # Improved with clarifications
+
+            # Check if all critical fields are now populated - if so, upgrade clarity
+            critical_fields_filled = all(
+                intent_json.get(field) and str(intent_json.get(field)).strip().lower() not in ["", "unspecified", "unknown", "unclear", "not mentioned", "none"]
+                for field in critical_fields.keys()
+            )
+
+            # Upgrade clarity back to high if originally high and now all criticals are filled
+            if originally_high_clarity and critical_fields_filled:
+                intent_json["clarity_level"] = "high"
+                clarity_confidence = "high"  # Restore confidence since all criticals are now filled
+            else:
+                intent_json["clarity_level"] = "high"  # Still improved with clarifications
 
             # Clear unknowns since we've addressed them
             intent_json["unknowns"] = []
@@ -364,11 +447,34 @@ Also ensure that inferred constraints or not_negotiable items align with real-wo
         else:
             print("\n✅ Gemini captured all context — no further clarifications needed.")
 
+        # Add automatic inferred pain points if missing
+        if not intent_json.get("pain_points") or len(intent_json["pain_points"]) < 2:
+            intent_json["pain_points"] = list(set(intent_json.get("pain_points", []) + [
+                "Manual effort leads to delays or errors.",
+                "Lack of automation increases operational cost.",
+                "No standardized process for handling inputs and outputs."
+            ]))[:3]
+
         # Add metadata for versioning and traceability
+        essential_fields = ["trigger_event", "inputs", "outputs", "constraints", "pain_points", "not_negotiable", "current_state", "volume", "user_role"]
+        verified_fields = [field for field in essential_fields if intent_json.get(field)]
+        missing_fields = [field for field in essential_fields if not intent_json.get(field)]
+
+        # Determine clarity confidence (can be upgraded after clarifications)
+        originally_high_clarity = intent_json.get("clarity_level", "").lower() == "high"
+        clarity_confidence = "high" if intent_json.get("clarity_level") == "high" else "medium"
+        if missing_critical_questions:
+            clarity_confidence = "medium"
+
         intent_json["metadata"] = {
             "version": "1.0",
             "agent_type": "ProblemUnderstandingAgent",
-            "last_updated": datetime.datetime.now().isoformat()
+            "last_updated": datetime.datetime.now().isoformat(),
+            "essential_fields_verified": verified_fields,
+            "missing_fields_prompted": missing_fields,
+            "clarity_confidence": clarity_confidence,
+            "layer_ready_for": "workflow_planner",
+            "needs_refinement": False if intent_json.get("clarity_level") == "high" and not missing_critical_questions else True
         }
 
         return intent_json
