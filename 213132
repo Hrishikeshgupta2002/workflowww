@@ -1,0 +1,33 @@
+{
+  "goal": "Automate the end-to-end process of handling immigration documentation, from initial client document submission to form selection and processing.",
+  "problem_type": "workflow",
+  "inputs": [
+    "Client-provided immigration documents (unspecified format)"
+  ],
+  "outputs": [
+    "End-to-end automated processing of immigration documents, including form selection and population."
+  ],
+  "entities": {
+    "action": "Automate",
+    "sources": "Client immigration documents",
+    "destination": "Automated immigration form processing system",
+    "tools": "Likely requires form selection logic and data extraction/population tools.",
+    "data_types": "Immigration data (e.g., personal information, visa details, travel history), form selection criteria"
+  },
+  "current_state": "Manual processing of immigration documents, including form selection by a paralegal.",
+  "pain_points": [
+    "Manual processing is time-consuming and potentially error-prone.",
+    "Reliance on paralegal for form selection."
+  ],
+  "constraints": [],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate the entire immigration documentation process, starting from client document submission and including form selection currently done by a paralegal. The current process is entirely manual and relies on Google Sheets for data storage. The desired outcome is end-to-end automation.",
+  "clarifications": {
+    "Which immigration forms (e.g., I-9, H-1B) are you looking to automate?": "so the client comes with diff documenation and then a paralegal proposes which form to fill",
+    "Can you briefly describe how these documents are currently processed from start to finish?": "right now its all manual",
+    "Which specific steps in the current process are you hoping to automate?": "all of the stuff",
+    "What software or databases currently store information related to these documents?": "google sheets",
+    "What improvements are you hoping to see after automating this process (e.g., faster processing times, fewer errors)?": "end to end automation"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "goal": "Automate the entire invoicing process, starting from a user taking a picture of a receipt.",
+  "problem_type": "workflow",
+  "inputs": [
+    "Picture of a receipt"
+  ],
+  "outputs": [
+    "Generated invoice in PDF format"
+  ],
+  "entities": {
+    "action": "Invoice generation",
+    "sources": [
+      "User-taken picture of a receipt"
+    ],
+    "destination": [
+      "Google Drive (preferred) or suggested alternative storage location"
+    ],
+    "tools": [
+      "OCR software (implied)",
+      "Invoice generation software (implied)"
+    ],
+    "data_types": [
+      "Image data (receipt)",
+      "Invoice data (PDF)"
+    ]
+  },
+  "current_state": "No existing invoicing software or system is currently in use. The process is likely manual.",
+  "pain_points": [
+    "Manual effort and time consumption in the current invoicing process.",
+    "Lack of an existing system to streamline invoicing."
+  ],
+  "constraints": [
+    "End-to-end automation is required.",
+    "Starts with a user taking a picture of a receipt.",
+    "Output invoice must be in PDF format.",
+    "Generated invoices should be saved to Google Drive or an alternative suggested location.",
+    "Data privacy and security of receipt data during processing and storage.",
+    "Accuracy of data extraction from receipts using OCR."
+  ],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate the invoicing process from start to finish, beginning with a user-taken picture of a receipt. The system should generate a PDF invoice and save it to Google Drive or a suggested alternative. The user currently has no invoicing system in place.",
+  "clarifications": {
+    "Will you be taking pictures of receipts, documents, or something else?": "recepits",
+    "What file type (like PDF or CSV) do you need the final invoice to be?": "pdf",
+    "Where do you want the generated invoices to be saved or sent?": "google drive or you suggest",
+    "Do you currently use any software or system for invoicing?": "no"
+  }
+}

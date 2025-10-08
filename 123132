@@ -1,0 +1,42 @@
+{
+  "goal": "Automate the process of posting content on social media platforms.",
+  "problem_type": "workflow",
+  "inputs": [
+    "Content to be posted (text, images, videos, links)",
+    "Scheduling information (date, time)"
+  ],
+  "outputs": [
+    "Posts published on specified social media platforms",
+    "Confirmation or error messages"
+  ],
+  "entities": {
+    "action": "Posting",
+    "sources": "User-provided content and schedule",
+    "destination": "Social media platforms",
+    "tools": null,
+    "data_types": [
+      "Text",
+      "Images",
+      "Videos",
+      "Links",
+      "Date",
+      "Time"
+    ]
+  },
+  "current_state": "Manual posting of content to social media platforms.",
+  "pain_points": [
+    "Time-consuming manual posting",
+    "Potential for missed posting times",
+    "Difficulty managing multiple social media accounts"
+  ],
+  "constraints": [],
+  "clarity_level": "high",
+  "unknowns": [],
+  "summary": "The user wants to automate the process of posting content to one or more social media platforms. (Clarified with 4 additional details)",
+  "clarifications": {
+    "Which social media sites will you be posting to (e.g., Facebook, Instagram, Twitter)?": "linkiden facebook and twitter",
+    "How often do you plan to post content on each platform (e.g., once a day, three times a week)?": "one a day",
+    "Can you describe the type of content you'll be posting (e.g., images, videos, text updates, links)?": "images and videos",
+    "Do you need to schedule posts for specific dates and times?": "yes"
+  }
+}
