@@ -1,65 +1,41 @@
 import os
 import json
 import datetime
+import logging
 from crewai import Agent, Task, Crew
 import google.generativeai as genai
 from crewai.llm import LLM
 from dotenv import load_dotenv
 
+# Configure structured logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
 # Load environment variables
 load_dotenv()
 
-# Set the Google API key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBQ727UMPalA1PLVaje0seFTldOV6z8vB0"
+# Set the API key for both direct Gemini SDK and LiteLLM
+api_key = "AIzaSyBQ727UMPalA1PLVaje0seFTldOV6z8vB0"
+os.environ["GOOGLE_API_KEY"] = api_key
+os.environ["GEMINI_API_KEY"] = api_key  # For LiteLLM compatibility
 
 # Configure the Google Generative AI SDK
-genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
-
-class GeminiLLM(LLM):
-    """Custom LLM class for Google Gemini integration with CrewAI"""
-
-    def __init__(self, model="gemini-2.0-flash", temperature=0.7, **kwargs):
-        super().__init__(model=model, **kwargs)
-        self.model_name = model
-        self.temperature = temperature
-        self.gemini_model = genai.GenerativeModel(model)
-
-    def call(self, messages, **kwargs):
-        """Convert CrewAI messages to Gemini format and get response"""
-        # Convert messages to Gemini format
-        prompt = ""
-        for msg in messages:
-            if isinstance(msg, dict):
-                role = msg.get("role", "user")
-                content = msg.get("content", "")
-            else:
-                # Handle string messages
-                content = str(msg)
-                role = "user"
-
-            if role == "system":
-                prompt = f"System: {content}\n\n"
-            elif role == "user":
-                prompt += f"User: {content}\n\n"
-            elif role == "assistant":
-                prompt += f"Assistant: {content}\n\n"
-
-        # Generate response
-        response = self.gemini_model.generate_content(
-            prompt.strip(),
-            generation_config=genai.types.GenerationConfig(
-                temperature=self.temperature,
-                max_output_tokens=2000,
-            )
-        )
-
-        return response.text.strip()
+genai.configure(api_key=api_key)
 
 class ProblemUnderstandingAgent:
     """Layer 1: Problem Understanding Agent (Intent Extraction Layer)"""
 
     def __init__(self):
-        self.gemini_llm = GeminiLLM(model="gemini-2.0-flash", temperature=0.3)  # Lower temperature for analytical output
+        self.llm = LLM(
+            model="gemini/gemini-2.0-flash-lite",
+            temperature=0.3  # Lower temperature for analytical output
+        )
         self.setup_agent()
 
     def setup_agent(self):
@@ -80,7 +56,7 @@ structured representation of the problem that can serve as input for workflow pl
 You adapt to the user's context and communication style — whether technical or non-technical —
 and always respond in a neutral, concise, and analytical tone optimized for documentation.
 """,
-            llm=self.gemini_llm,
+            llm=self.llm,
             verbose=False,  # Less verbose for clean output
             allow_delegation=False
         )
@@ -98,7 +74,8 @@ and always respond in a neutral, concise, and analytical tone optimized for docu
             fallback_questions.append(("inputs", "What does your process start with — files, messages, forms, or API data?"))
 
         # 3. Output Destination - Essential for workflow completion
-        if not intent_json["entities"].get("destination") or "unspecified" in str(intent_json["entities"]["destination"]).lower():
+        entities = intent_json.get("entities", {})
+        if not entities.get("destination") or "unspecified" in str(entities.get("destination", "")).lower():
             fallback_questions.append(("outputs", "Where should the final output or results be stored or sent?"))
 
         # 4. Success Criteria / Output Format
@@ -162,8 +139,8 @@ Example format:
 """
 
         try:
-            # Use Gemini directly for question generation
-            response = self.gemini_llm.call([{"role": "user", "content": clarification_prompt}])
+            # Use LLM directly for question generation
+            response = self.llm.call([{"role": "user", "content": clarification_prompt}])
 
             # Parse the numbered list into individual questions
             questions = []
@@ -337,13 +314,13 @@ Ensure all string values are specific and contextual — avoid placeholders like
         if missing_critical_questions:
             if originally_high_clarity:
                 intent_json["clarity_level"] = "medium"
-            print("\n⚙️ Some critical details are missing — let's clarify those first.")
+            logger.info("Some critical details are missing — let's clarify those first.")
 
         # Auto trigger clarification - too important to leave to inference
         if not intent_json.get("trigger_event") or "unspecified" in str(intent_json.get("trigger_event", "")).lower() or "unclear" in str(intent_json.get("trigger_event", "")).lower():
-            print("\n⚙️ I need one key clarification before continuing.")
-            print("What should trigger or start this process?")
-            print("Examples: when a file is uploaded, every morning at 9 AM, when a new email arrives, or when you click a button.")
+            logger.info("I need one key clarification before continuing.")
+            logger.info("What should trigger or start this process?")
+            logger.info("Examples: when a file is uploaded, every morning at 9 AM, when a new email arrives, or when you click a button.")
             user_trigger = input("> ").strip()
             if user_trigger:
                 intent_json["trigger_event"] = user_trigger
@@ -356,7 +333,7 @@ Ensure all string values are specific and contextual — avoid placeholders like
 
         # --- Merge all question sources ---
         if not questions and (not unknowns or len(unknowns) == 0):
-            print("\n⚙️ No clarifying questions detected from Gemini — inferring fallback ones...")
+            logger.info("No clarifying questions detected from Gemini — inferring fallback ones...")
             questions = self.infer_fallback_questions(intent_json)
 
         # Merge critical missing questions if any
@@ -365,7 +342,7 @@ Ensure all string values are specific and contextual — avoid placeholders like
 
         # Step 4: Proceed only if we have *any* questions now
         if questions:
-            print("\n🤔 I need a few clarifications to understand better:")
+            logger.info("I need a few clarifications to understand better:")
             user_answers = {}
 
             # Ask questions interactively
@@ -435,17 +412,17 @@ Also ensure that inferred constraints or not_negotiable items align with real-wo
 """
 
                 try:
-                    refined_response = self.gemini_llm.call([{"role": "user", "content": refinement_prompt}])
+                    refined_response = self.llm.call([{"role": "user", "content": refinement_prompt}])
                     start_idx = refined_response.find('{')
                     end_idx = refined_response.rfind('}') + 1
                     if start_idx != -1 and end_idx != -1:
                         refined_json = json.loads(refined_response[start_idx:end_idx])
                         intent_json = refined_json  # overwrite with refined version
                 except Exception as e:
-                    print(f"⚠️ Refinement failed: {e}. Keeping original JSON.")
+                    logger.warning(f"Refinement failed: {e}. Keeping original JSON.")
 
         else:
-            print("\n✅ Gemini captured all context — no further clarifications needed.")
+            logger.info("Gemini captured all context — no further clarifications needed.")
 
         # Add automatic inferred pain points if missing
         if not intent_json.get("pain_points") or len(intent_json["pain_points"]) < 2:
@@ -482,56 +459,55 @@ Also ensure that inferred constraints or not_negotiable items align with real-wo
 
 def main():
     """Main function to run the Problem Understanding Agent (Layer 1)"""
-    print("🧠 Welcome to the AI Problem Understanding Assistant!")
-    print("This tool analyzes your problem statements and extracts structured intent.\n")
+    logger.info("Welcome to the AI Problem Understanding Assistant!")
+    logger.info("This tool analyzes your problem statements and extracts structured intent.\n")
 
     # Check for API key
     if not os.getenv("GOOGLE_API_KEY"):
-        print("❌ GOOGLE_API_KEY environment variable not found!")
-        print("Please set your Google API key:")
-        print("export GOOGLE_API_KEY='your_key_here'")
+        logger.error("GOOGLE_API_KEY environment variable not found!")
+        logger.error("Please set your Google API key:")
+        logger.error("export GOOGLE_API_KEY='your_key_here'")
         return
 
     try:
         # Step 1: Initial problem understanding (Layer 1)
-        print("🧠 LAYER 1: PROBLEM UNDERSTANDING")
-        print("-" * 40)
+        logger.info("LAYER 1: PROBLEM UNDERSTANDING")
+        logger.info("-" * 40)
 
         initial_problem = input("Describe your problem or goal briefly:\n> ").strip()
 
         if not initial_problem:
-            print("❌ No problem statement provided. Exiting.")
+            logger.error("No problem statement provided. Exiting.")
             return
 
         # Initialize understanding agent
         understanding_agent = ProblemUnderstandingAgent()
 
-        print("\n🔍 Analyzing your problem statement...")
+        logger.info("Analyzing your problem statement...")
         intent_analysis = understanding_agent.extract_intent(initial_problem)
 
         # Display the structured understanding
-        print("\n📊 PROBLEM ANALYSIS RESULTS:")
-        print("=" * 50)
-        import json
-        print(json.dumps(intent_analysis, indent=2))
-        print("=" * 50)
+        logger.info("PROBLEM ANALYSIS RESULTS:")
+        logger.info("=" * 50)
+        logger.info(json.dumps(intent_analysis, indent=2))
+        logger.info("=" * 50)
 
         # Display unknowns if any
         unknowns = intent_analysis.get("unknowns", [])
         if unknowns:
-            print(f"\n📋 IDENTIFIED UNKNOWNS ({len(unknowns)}):")
+            logger.info(f"IDENTIFIED UNKNOWNS ({len(unknowns)}):")
             for i, unknown in enumerate(unknowns, 1):
-                print(f"   {i}. {unknown}")
+                logger.info(f"   {i}. {unknown}")
 
-        print(f"\n🎯 CLARITY LEVEL: {intent_analysis.get('clarity_level', 'unknown').upper()}")
+        logger.info(f"CLARITY LEVEL: {intent_analysis.get('clarity_level', 'unknown').upper()}")
 
         # Layer 1 is complete - just understanding, no workflow planning
-        print("\n💡 UNDERSTANDING COMPLETE")
-        print("Layer 1 analysis finished. Your intent has been extracted and structured.")
-        print("This understanding can be used for any subsequent analysis or planning.")
+        logger.info("UNDERSTANDING COMPLETE")
+        logger.info("Layer 1 analysis finished. Your intent has been extracted and structured.")
+        logger.info("This understanding can be used for any subsequent analysis or planning.")
 
         # Option to save the intent analysis
-        save_intent = input("\n💾 Would you like to save this intent analysis? (y/n): ").lower().strip()
+        save_intent = input("\n[SAVE] Would you like to save this intent analysis? (y/n): ").lower().strip()
         if save_intent == 'y':
             filename = input("Enter filename (default: intent_analysis.json): ").strip()
             if not filename:
@@ -540,14 +516,14 @@ def main():
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(intent_analysis, f, indent=2)
 
-            print(f"✅ Intent analysis saved to {filename}")
+            logger.info(f"Intent analysis saved to {filename}")
 
-        print("\n🙏 Thank you for using the Workflow Planning Assistant!")
-        print("Your analysis is complete!")
+        logger.info("Thank you for using the Workflow Planning Assistant!")
+        logger.info("Your analysis is complete!")
 
     except Exception as e:
-        print(f"❌ An error occurred: {str(e)}")
-        print("Please check your API key and internet connection, then try again.")
+        logger.error(f"An error occurred: {str(e)}")
+        logger.error("Please check your API key and internet connection, then try again.")
 
 if __name__ == "__main__":
     main()

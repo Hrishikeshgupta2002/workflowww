@@ -1,0 +1,80 @@
+{
+  "goal": "Automate the sales outreach process.",
+  "problem_type": "workflow",
+  "trigger_event": "Likely initiated by a defined schedule, lead generation event, or sales cycle stage.",
+  "inputs": [
+    "Lead data from Google Ads and LinkedIn Ads",
+    "Sales content (customized outreach messages)"
+  ],
+  "outputs": [
+    "Automated outreach communications via cold email, Google Ads, and LinkedIn Ads",
+    "Interaction tracking within Freshworks and PhantomBuster (if applicable)"
+  ],
+  "volume": "Dependent on the number of leads generated through ads and sales targets.",
+  "user_role": "Salesperson or sales team",
+  "success_criteria": "Increased efficiency in outreach, improved lead engagement, and/or increased sales.",
+  "entities": {
+    "action": "Sales outreach",
+    "sources": "Google Ads, LinkedIn Ads",
+    "destination": "Potential customers for an AI tool",
+    "tools": "Freshworks, PhantomBuster (CRM/Sales tools), email marketing platform (implied)",
+    "data_types": [
+      "Lead contact information",
+      "Sales content",
+      "Interaction history"
+    ]
+  },
+  "current_state": "Manual or partially automated sales outreach using cold email, Google Ads, and LinkedIn Ads, with Freshworks and PhantomBuster.",
+  "pain_points": [
+    "Manual effort in outreach across multiple channels (cold email, Google Ads, LinkedIn Ads)",
+    "Time-consuming process of customizing messages for each lead",
+    "Potential for inconsistent messaging",
+    "Inefficient use of existing tools (Freshworks, PhantomBuster)"
+  ],
+  "constraints": [
+    "Compliance with GDPR, CAN-SPAM, and other relevant regulations for cold email and advertising.",
+    "Maintaining a positive customer experience with fully customized messages.",
+    "Integration limitations between chosen channels (cold email, Google Ads, LinkedIn Ads) and tools (Freshworks, PhantomBuster).",
+    "Data privacy and security related to lead information.",
+    "Accuracy of lead data from advertising sources."
+  ],
+  "not_negotiable": [
+    "Adherence to legal and ethical standards (GDPR, CAN-SPAM)",
+    "Data privacy and security of lead information.",
+    "Maintaining brand reputation and avoiding spam complaints."
+  ],
+  "clarity_level": "high",
+  "unknowns": [
+    "Specific details of the AI tool being sold.",
+    "Specific sales targets and lead volume.",
+    "The exact level of automation desired for Google Ads and LinkedIn Ads (e.g., bidding strategies, ad copy generation)."
+  ],
+  "summary": "The user wants to automate their sales outreach across cold email, Google Ads, and LinkedIn Ads, using Freshworks and PhantomBuster, while ensuring fully customized messages and adhering to legal and ethical standards.",
+  "clarifications": {
+    "What channels do you currently use for sales outreach, and which ones do you want to automate?": "cold email google ads linkiden ads",
+    "What CRM or sales tools are you currently using?": "phantom buster and freshworks",
+    "Where do you get your leads, and what kind of information do you have about them?": "we get via ads we run",
+    "Who are you trying to sell to, and what are your primary sales objectives?": "we are selling our ai tool",
+    "How much do you want to customize each outreach message?": "fully customised"
+  },
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "2025-10-08T19:25:17.157017",
+    "essential_fields_verified": [
+      "trigger_event",
+      "inputs",
+      "outputs",
+      "constraints",
+      "pain_points",
+      "not_negotiable",
+      "current_state",
+      "volume",
+      "user_role"
+    ],
+    "missing_fields_prompted": [],
+    "clarity_confidence": "high",
+    "layer_ready_for": "workflow_planner",
+    "needs_refinement": false
+  }
+}
