@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 from crewai import Agent, Task, Crew
 import google.generativeai as genai
 from crewai.llm import LLM
@@ -67,11 +68,17 @@ class ProblemUnderstandingAgent:
             role="Problem Understanding Agent",
             goal="Extract and structure the underlying intent from problem statements without providing solutions",
             backstory="""
-You are an expert problem analyst trained to extract structure and intent from user problem statements.
-Your mission is to understand, not to solve. You identify goals, entities, processes, pain points, and
-implicit constraints with precision and neutrality. You never suggest tools or implementation methods.
-Your focus is on structured comprehension and clarification — surfacing unknowns and enabling refinement
-until a high-clarity representation of the problem is achieved.
+You are an expert problem analyst trained to extract structure and intent from user problem statements
+across business, operational, and technical domains. Your mission is to understand, not to solve.
+You identify goals, entities, processes, pain points, and implicit or explicit constraints with
+precision and neutrality. You never suggest tools or implementation methods.
+
+When the user's input is ambiguous or incomplete, you explicitly surface those gaps as 'unknowns'
+and generate clarifying questions to improve understanding. Your goal is to achieve a high-clarity,
+structured representation of the problem that can serve as input for workflow planning or system design.
+
+You adapt to the user's context and communication style — whether technical or non-technical —
+and always respond in a neutral, concise, and analytical tone optimized for documentation.
 """,
             llm=self.gemini_llm,
             verbose=False,  # Less verbose for clean output
@@ -162,12 +169,26 @@ Return only a structured JSON with these exact fields:
   "not_negotiable": ["List of absolute requirements that cannot be compromised"],
   "clarity_level": "high | medium | low",
   "unknowns": ["List of missing information needed for clarity"],
-  "summary": "One-sentence summary of the core intent"
+  "summary": "One-sentence summary of the core intent",
+  "metadata": {
+    "version": "1.0",
+    "agent_type": "ProblemUnderstandingAgent",
+    "last_updated": "auto-fill-timestamp"
+  }
 }}
 
 Do NOT suggest tools, solutions, or roadmaps.
 Keep tone neutral and analytical.
 Return ONLY the JSON object, no additional text.
+
+After forming the JSON, verify internally that:
+- Each field is filled as completely as possible based on the input.
+- 'current_state' reflects any described manual or existing process.
+- 'constraints' include both explicit (mentioned) and implicit (logical) limitations.
+- 'pain_points' include any friction points mentioned or implied.
+- 'unknowns' only include questions that are genuinely unclear from the user's input.
+
+Ensure all string values are specific and contextual — avoid placeholders like "unspecified" unless truly no data exists.
 """
 
         task = Task(
@@ -276,6 +297,11 @@ Existing Intent JSON:
 {json.dumps(intent_json, indent=2)}
 
 Return ONLY the updated JSON object, no explanations.
+
+Before finalizing the JSON, review whether the clarifications change the problem classification
+(e.g., from 'data task' to 'workflow'). If so, update the 'problem_type' field accordingly.
+Also ensure that inferred constraints or not_negotiable items align with real-world logic
+(e.g., legal, performance, or privacy-related considerations).
 """
 
                     try:
@@ -290,6 +316,13 @@ Return ONLY the updated JSON object, no explanations.
 
             else:
                 print("No clarifying questions needed.")
+
+        # Add metadata for versioning and traceability
+        intent_json["metadata"] = {
+            "version": "1.0",
+            "agent_type": "ProblemUnderstandingAgent",
+            "last_updated": datetime.datetime.now().isoformat()
+        }
 
         return intent_json
 
